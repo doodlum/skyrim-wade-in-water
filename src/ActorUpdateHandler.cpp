@@ -35,21 +35,21 @@ float ActorUpdateHandler::GetWaterMultiplier(RE::Actor* a_actor)
 			a_actor->RemoveSpell(WaterSlowdownSmall);
 			a_actor->AddSpell(WaterSlowdownSwim);
 		}
-		return 1.0f;
+		waterMultiplier = 1.0f - (std::lerp(0, WaterSlowdownSwim->effects[0]->effectItem.magnitude, (submergedLevel - 0.69f) / (1 - 0.69f)) / 100);
 	} else if (submergedLevel >= 0.4f) {
 		if (!a_actor->HasSpell(WaterSlowdownLarge)) {
 			a_actor->RemoveSpell(WaterSlowdownSwim);
 			a_actor->RemoveSpell(WaterSlowdownSmall);
 			a_actor->AddSpell(WaterSlowdownLarge);
-			waterMultiplier = 1.0f - (std::lerp(0, WaterSlowdownLarge->effects[0]->effectItem.magnitude, submergedLevel + 0.6f) / 100);
 		}
+		waterMultiplier = 1.0f - (WaterSlowdownLarge->effects[0]->effectItem.magnitude / 100);
 	} else if (submergedLevel >= 0.2f) {
 		if (!a_actor->HasSpell(WaterSlowdownSmall)) {
 			a_actor->RemoveSpell(WaterSlowdownSwim);
 			a_actor->RemoveSpell(WaterSlowdownLarge);
 			a_actor->AddSpell(WaterSlowdownSmall);
 		}
-		waterMultiplier = 1.0f - (std::lerp(WaterSlowdownSmall->effects[0]->effectItem.magnitude, WaterSlowdownLarge->effects[0]->effectItem.magnitude, submergedLevel - 0.2f * 5) / 100);
+		waterMultiplier = 1.0f - (std::lerp(WaterSlowdownSmall->effects[0]->effectItem.magnitude, WaterSlowdownLarge->effects[0]->effectItem.magnitude, (submergedLevel - 0.2f) * 5) / 100);
 	} else {
 		a_actor->RemoveSpell(WaterSlowdownSwim);
 		a_actor->RemoveSpell(WaterSlowdownLarge);
