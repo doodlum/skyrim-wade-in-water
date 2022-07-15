@@ -18,38 +18,27 @@ float ActorUpdateHandler::GetWaterMultiplier(RE::Actor* a_actor)
 	auto submergedLevel = GetSubmergedLevel(a_actor);
 	auto waterMultiplier = 1.0f;
 
-	if (a_actor->IsSwimming()) {
+	if (submergedLevel >= 0.69f) {
 		if (!a_actor->HasSpell(WaterSlowdownSwim)) {
 			a_actor->RemoveSpell(WaterSlowdownLarge);
 			a_actor->RemoveSpell(WaterSlowdownSmall);
 			a_actor->AddSpell(WaterSlowdownSwim);
 		}
-		if (submergedLevel == 1.0f) {
-			return 1.0f;
-		}
-	}
-
-	if (a_actor->IsSwimming()) {
-		if (!a_actor->HasSpell(WaterSlowdownSmall)) {
-			a_actor->RemoveSpell(WaterSlowdownLarge);
-			a_actor->RemoveSpell(WaterSlowdownSmall);
-			a_actor->AddSpell(WaterSlowdownSwim);
-		}
-		waterMultiplier = 1.0f - (std::lerp(WaterSlowdownLarge->effects[0]->effectItem.magnitude, WaterSlowdownSwim->effects[0]->effectItem.magnitude, (submergedLevel - -0.69f) / (1 - 0.69f)) / 100);
+		waterMultiplier = 1.0f - (WaterSlowdownSwim->effects[0]->effectItem.magnitude / 100);
 	} else if (submergedLevel >= 0.4f) {
 		if (!a_actor->HasSpell(WaterSlowdownLarge)) {
 			a_actor->RemoveSpell(WaterSlowdownSwim);
 			a_actor->RemoveSpell(WaterSlowdownSmall);
 			a_actor->AddSpell(WaterSlowdownLarge);
 		}
-		waterMultiplier = 1.0f - (WaterSlowdownLarge->effects[0]->effectItem.magnitude / 100);
+		waterMultiplier = 1.0f - (std::lerp(WaterSlowdownSmall->effects[0]->effectItem.magnitude, WaterSlowdownLarge->effects[0]->effectItem.magnitude, (submergedLevel - 0.2f) / (1 - 0.49f)) / 100);
 	} else if (submergedLevel >= 0.2f) {
 		if (!a_actor->HasSpell(WaterSlowdownSmall)) {
 			a_actor->RemoveSpell(WaterSlowdownSwim);
 			a_actor->RemoveSpell(WaterSlowdownLarge);
 			a_actor->AddSpell(WaterSlowdownSmall);
 		}
-		waterMultiplier = 1.0f - (std::lerp(WaterSlowdownSmall->effects[0]->effectItem.magnitude, WaterSlowdownLarge->effects[0]->effectItem.magnitude, (submergedLevel - 0.2f) * 5) / 100);
+		waterMultiplier = 1.0f - (std::lerp(WaterSlowdownSmall->effects[0]->effectItem.magnitude, WaterSlowdownLarge->effects[0]->effectItem.magnitude, (submergedLevel - 0.2f) / (1 - 0.49f)) / 100);
 	} else {
 		a_actor->RemoveSpell(WaterSlowdownSwim);
 		a_actor->RemoveSpell(WaterSlowdownLarge);
