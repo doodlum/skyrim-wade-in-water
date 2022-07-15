@@ -1,6 +1,6 @@
 #include "ActorUpdateHandler.h"
 
-void ActorUpdateHandler::Update(RE::Actor* a_actor, [[maybe_unused]] float a_delta)
+float ActorUpdateHandler::GetWaterMultiplier(RE::Actor* a_actor)
 {
 	static RE::SpellItem*      WaterSlowdownSmall;
 	static RE::SpellItem*      WaterSlowdownLarge;
@@ -16,28 +16,46 @@ void ActorUpdateHandler::Update(RE::Actor* a_actor, [[maybe_unused]] float a_del
 	};
 
 	auto submergedLevel = GetSubmergedLevel(a_actor);
+	auto waterMultiplier = 1.0f;
 
-	if (submergedLevel >= 0.69) {
-		if (a_actor->HasSpell(WaterSlowdownSwim))
-			return;
-		a_actor->RemoveSpell(WaterSlowdownLarge);
-		a_actor->RemoveSpell(WaterSlowdownSmall);
-		a_actor->AddSpell(WaterSlowdownSwim);
-	} else if (submergedLevel >= 0.4) {
-		if (a_actor->HasSpell(WaterSlowdownLarge))
-			return;
-		a_actor->RemoveSpell(WaterSlowdownSwim);
-		a_actor->RemoveSpell(WaterSlowdownSmall);
-		a_actor->AddSpell(WaterSlowdownLarge);
-	} else if (submergedLevel >= 0.2) {
-		if (a_actor->HasSpell(WaterSlowdownSmall))
-			return;
-		a_actor->RemoveSpell(WaterSlowdownSwim);
-		a_actor->RemoveSpell(WaterSlowdownLarge);
-		a_actor->AddSpell(WaterSlowdownSmall);
+	if (a_actor->IsSwimming()) {
+		if (!a_actor->HasSpell(WaterSlowdownSwim)) {
+			a_actor->RemoveSpell(WaterSlowdownLarge);
+			a_actor->RemoveSpell(WaterSlowdownSmall);
+			a_actor->AddSpell(WaterSlowdownSwim);
+		}
+		if (submergedLevel == 1.0f) {
+			return 1.0f;
+		}
+	}
+
+	if (a_actor->IsSwimming()) {
+		if (!a_actor->HasSpell(WaterSlowdownSwim)) {
+			a_actor->RemoveSpell(WaterSlowdownLarge);
+			a_actor->RemoveSpell(WaterSlowdownSmall);
+			a_actor->AddSpell(WaterSlowdownSwim);
+		}
+		return 1.0f;
+	} else if (submergedLevel >= 0.4f) {
+		if (!a_actor->HasSpell(WaterSlowdownLarge)) {
+			a_actor->RemoveSpell(WaterSlowdownSwim);
+			a_actor->RemoveSpell(WaterSlowdownSmall);
+			a_actor->AddSpell(WaterSlowdownLarge);
+			waterMultiplier = 1.0f - (std::lerp(0, WaterSlowdownLarge->effects[0]->effectItem.magnitude, submergedLevel + 0.6f) / 100);
+		}
+	} else if (submergedLevel >= 0.2f) {
+		if (!a_actor->HasSpell(WaterSlowdownSmall)) {
+			a_actor->RemoveSpell(WaterSlowdownSwim);
+			a_actor->RemoveSpell(WaterSlowdownLarge);
+			a_actor->AddSpell(WaterSlowdownSmall);
+		}
+		waterMultiplier = 1.0f - (std::lerp(WaterSlowdownSmall->effects[0]->effectItem.magnitude, WaterSlowdownLarge->effects[0]->effectItem.magnitude, submergedLevel - 0.2f * 5) / 100);
 	} else {
 		a_actor->RemoveSpell(WaterSlowdownSwim);
 		a_actor->RemoveSpell(WaterSlowdownLarge);
 		a_actor->RemoveSpell(WaterSlowdownSmall);
+		waterMultiplier = 1.0f - (std::lerp(0, WaterSlowdownSmall->effects[0]->effectItem.magnitude, submergedLevel * 5) / 100);
 	}
+
+	return waterMultiplier;
 }

@@ -26,36 +26,26 @@ public:
 		return GetSubmergedLevel_Impl(a_actor, a_actor->GetPositionZ(), a_actor->GetParentCell());
 	}
 
-	void Update(RE::Actor* a_actor, float a_delta);
+	static float GetWaterMultiplier(RE::Actor* a_actor);
 
 
 protected:
 	struct Hooks
 	{
-		struct PlayerCharacter_Update
+		struct Actor_SetMaximumMovementSpeed
 		{
-			static void thunk(RE::PlayerCharacter* a_player, float a_delta)
+			static float thunk(RE::Actor* a_actor)
 			{
-				func(a_player, a_delta);
-				GetSingleton()->Update(a_player, a_delta);
+				float original = func(a_actor);
+				return original * GetWaterMultiplier(a_actor);
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
-		struct Actor_Update
-		{
-			static void thunk(RE::Actor* a_actor, float a_delta)
-			{
-				func(a_actor, a_delta);
-				GetSingleton()->Update(a_actor, a_delta);
-			}
-			static inline REL::Relocation<decltype(thunk)> func;
-		};
 
 		static void Install()
 		{
-			stl::write_vfunc<RE::PlayerCharacter, 0xAD, PlayerCharacter_Update>();
-			stl::write_vfunc<RE::Character, 0xAD, Actor_Update>();
+			stl::write_thunk_call<Actor_SetMaximumMovementSpeed>(REL::RelocationID(37013, 37943).address() + REL::Relocate(0x1A, 0x51));
 		}
 	};
 private:
