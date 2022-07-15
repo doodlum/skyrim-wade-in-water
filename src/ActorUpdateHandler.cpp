@@ -5,7 +5,6 @@ float ActorUpdateHandler::GetWaterMultiplier(RE::Actor* a_actor)
 	static RE::SpellItem*      WaterSlowdownSmall;
 	static RE::SpellItem*      WaterSlowdownLarge;
 	static RE::SpellItem*      WaterSlowdownSwim;
-	static bool                usingPlugin;
 	static RE::TESDataHandler* dataHandler;
 	if (!dataHandler) {
 		dataHandler = RE::TESDataHandler::GetSingleton();
@@ -13,7 +12,6 @@ float ActorUpdateHandler::GetWaterMultiplier(RE::Actor* a_actor)
 			WaterSlowdownSmall = dataHandler->LookupForm<RE::SpellItem>(0xD64, "WadeInWater.esp");
 			WaterSlowdownLarge = dataHandler->LookupForm<RE::SpellItem>(0xD65, "WadeInWater.esp");
 			WaterSlowdownSwim = dataHandler->LookupForm<RE::SpellItem>(0xD67, "WadeInWater.esp");
-			usingPlugin = WaterSlowdownSwim && WaterSlowdownLarge && WaterSlowdownSwim;
 		}
 	};
 
@@ -32,32 +30,30 @@ float ActorUpdateHandler::GetWaterMultiplier(RE::Actor* a_actor)
 	}
 
 	if (a_actor->IsSwimming()) {
-		if (usingPlugin && !a_actor->HasSpell(WaterSlowdownSwim)) {
+		if (!a_actor->HasSpell(WaterSlowdownSmall)) {
 			a_actor->RemoveSpell(WaterSlowdownLarge);
 			a_actor->RemoveSpell(WaterSlowdownSmall);
 			a_actor->AddSpell(WaterSlowdownSwim);
 		}
-		waterMultiplier = 1.0f - (std::lerp(0, WaterSlowdownSwim->effects[0]->effectItem.magnitude, (submergedLevel - 0.69f) / (1 - 0.69f)) / 100);
+		waterMultiplier = 1.0f - (std::lerp(WaterSlowdownLarge->effects[0]->effectItem.magnitude, WaterSlowdownSwim->effects[0]->effectItem.magnitude, (submergedLevel - -0.69f) / (1 - 0.69f)) / 100);
 	} else if (submergedLevel >= 0.4f) {
-		if (usingPlugin && !a_actor->HasSpell(WaterSlowdownLarge)) {
+		if (!a_actor->HasSpell(WaterSlowdownLarge)) {
 			a_actor->RemoveSpell(WaterSlowdownSwim);
 			a_actor->RemoveSpell(WaterSlowdownSmall);
 			a_actor->AddSpell(WaterSlowdownLarge);
 		}
 		waterMultiplier = 1.0f - (WaterSlowdownLarge->effects[0]->effectItem.magnitude / 100);
 	} else if (submergedLevel >= 0.2f) {
-		if (usingPlugin && !a_actor->HasSpell(WaterSlowdownSmall)) {
+		if (!a_actor->HasSpell(WaterSlowdownSmall)) {
 			a_actor->RemoveSpell(WaterSlowdownSwim);
 			a_actor->RemoveSpell(WaterSlowdownLarge);
 			a_actor->AddSpell(WaterSlowdownSmall);
 		}
 		waterMultiplier = 1.0f - (std::lerp(WaterSlowdownSmall->effects[0]->effectItem.magnitude, WaterSlowdownLarge->effects[0]->effectItem.magnitude, (submergedLevel - 0.2f) * 5) / 100);
 	} else {
-		if (usingPlugin) {
-			a_actor->RemoveSpell(WaterSlowdownSwim);
-			a_actor->RemoveSpell(WaterSlowdownLarge);
-			a_actor->RemoveSpell(WaterSlowdownSmall);
-		}
+		a_actor->RemoveSpell(WaterSlowdownSwim);
+		a_actor->RemoveSpell(WaterSlowdownLarge);
+		a_actor->RemoveSpell(WaterSlowdownSmall);
 		waterMultiplier = 1.0f - (std::lerp(0, WaterSlowdownSmall->effects[0]->effectItem.magnitude, submergedLevel * 5) / 100);
 	}
 
